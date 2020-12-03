@@ -90,15 +90,13 @@ function getProfileInfo(req, res, next) {
     console.log('profile');
     const { _id: userId } = req.user;
     userModel.findById(userId)
-        .populate('positions')
-        .then(r => {
-            let isExists = r.positions.filter(trade => trade.symbol === 'eth')[0];
-            console.log(isExists);
-            if (isExists) {
-              //userModel.updateOne({_id: isExists},{} )
-            } else {
-
-            }
+        .then((user) => {
+            let userData = {
+                userId: user._id,
+                email: user.email,
+                username: user.username,
+            };
+            res.status(200).json(user);
         })
         .catch(e => console.log(e));
 

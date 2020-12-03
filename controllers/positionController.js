@@ -26,7 +26,7 @@ function createPosition(req, res, next) {
         .then(r => {
             let isExists = r.positions.filter((trade) => trade.symbol === symbol)[0];
             if (!!isExists) {
-                
+
                 allSum = isExists.sum + sum;
                 allShares = isExists.shares + shares;
                 avgEntry = allSum / allShares;
@@ -57,8 +57,22 @@ function createPosition(req, res, next) {
 }
 
 function getAllPositions(req, res, next) {
-    res.status(200).json(updatedCoins.getUpdatedData());
-}
+    // 'Content-Type': 'text/event-stream',
+    // 'Cache-Control': 'no-cache',
+    // 'Connection': 'keep-alive'
+    res.set('Content-Type', 'text/event-stream');
+    res.set('Cache-Control', 'no - cache');
+    res.set('Connection', 'keep-alive');
+    setInterval(function () {
+        let date = new Date(); //to capture the timestamp of the request
+        console.log('executing request');
+        res.write('event:' + 'timestamp\n');
+        res.write('data:' + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + '\n\n');
+        res.write('data:' + JSON.stringify(updatedCoins.getUpdatedData()) + '\n\n');
+    }, 2000);
+};
+//res.status(200).json(updatedCoins.getUpdatedData());
+
 
 function getHistory(req, res, next) {
     const { _id: userId } = req.user;
