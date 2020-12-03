@@ -18,7 +18,7 @@ Here is the response we get:
 }
 ```
 
-If your response looks slightly different don't panic. This is probably because more data has been added to the API since I made this documentation.
+
 
 ## Base URL
 The Base URL is the root URL for all of the API, if you ever make a request to the API and you get back a 404 NOT FOUND response then check the Base URL first.

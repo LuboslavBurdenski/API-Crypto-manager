@@ -40,7 +40,7 @@ let data = '';
 let coinsForCustomers;
 //making call to CoinGecko API each 15 seconds to take the coins needed in desc order
 (function nodeCronAllCoinsForCustomers() {
-    cron.schedule('*/2 * * * * *', (req, res, next) => {
+    cron.schedule('*/5 * * * * *', (req, res, next) => {
       //  console.log("running task every 1.5 seconds");
         let uniqueIdsOfCoins = [];
         positionModel.find({ isOpen: true })
@@ -89,8 +89,15 @@ let updatedData;
                         let changeIn24h;
                         let prtLoss;
                         let prtLossPerCent;
+                        let isOpen = true;
                         if (coin.id === trade.coinId) {
                             currentPrice = coin.current_price;
+                            if(trade.stop){
+                                if(currentPrice <= trade.stop){ isOpen = false}
+                            }
+                            if(trade.stop){
+                                if(currentPrice >= trade.target){ isOpen = false}
+                            }
                             changeIn24h = coin.price_change_percentage_24h_in_currency;
                             prtLoss = currentPrice - trade.entry;
                             prtLossPerCent = (prtLoss / trade.entry) * 100;
@@ -99,6 +106,7 @@ let updatedData;
                                 changeIn24h: changeIn24h,
                                 prfLoss: prtLoss,
                                 prfLossPerCent: prtLossPerCent,
+                                isOpen: isOpen
                             })
                                 .then((updatedTrade) => { midUpdatedData.push(updatedTrade); })
                                 .catch(next)
