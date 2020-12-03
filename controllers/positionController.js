@@ -60,7 +60,19 @@ function getAllPositions(req, res, next) {
     res.status(200).json(updatedCoins.getUpdatedData());
 }
 
+function getHistory(req, res, next) {
+    const { _id: userId } = req.user;
+    userModel.findById(userId)
+        .populate(
+            {
+                path: 'positions',
+                match: { isOpen: false },
+            })
+        .then(result => res.status(200).json(result))
+        .catch(next);
+}
 module.exports = {
     createPosition,
-    getAllPositions
+    getAllPositions,
+    getHistory
 }

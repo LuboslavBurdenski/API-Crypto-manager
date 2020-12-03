@@ -5,6 +5,7 @@ const { positionController } = require('../controllers');
 
 //router.get('/',);
 router.get('/list', auth(), positionController.getAllPositions);
+router.get('/list', auth(), positionController.getAllPositions);
 router.post('/create', auth(), positionController.createPosition);
 
 module.exports = router;
