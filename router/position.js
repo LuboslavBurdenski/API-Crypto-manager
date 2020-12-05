@@ -4,6 +4,7 @@ const { auth } = require('../utils');
 const { positionController } = require('../controllers');
 
 router.get('/list', auth(), positionController.getAllPositions);
+router.get('/details/:id', auth(), positionController.getDetailsForPosition);
 router.get('/history', auth(), positionController.getHistory);
 router.post('/create', auth(), positionController.createPosition);
 

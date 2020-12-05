@@ -40,7 +40,7 @@ let data = '';
 let coinsForCustomers;
 //making call to CoinGecko API each 15 seconds to take the coins needed in desc order
 (function nodeCronAllCoinsForCustomers() {
-    cron.schedule('*/5 * * * * *', (req, res, next) => {
+    cron.schedule('*/1.5 * * * * *', (req, res, next) => {
         //  console.log("running task every 1.5 seconds");
         let uniqueIdsOfCoins = [];
         positionModel.find({ isOpen: true })
@@ -78,7 +78,7 @@ let coinsForCustomers;
 
 let updatedData;
 (function nodeCronUpdateAllOpenPositions() {
-    cron.schedule('*/3 * * * * *', (req, res, next) => {
+    cron.schedule('*/1.7 * * * * *', (req, res, next) => {
         //console.log("running task every 2 seconds");
         let midUpdatedData = [];
         positionModel.find({ isOpen: true })

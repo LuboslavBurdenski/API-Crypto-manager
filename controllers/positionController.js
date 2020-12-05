@@ -61,7 +61,10 @@ function getAllPositions(req, res, next) {
     let userPositions;
 
     userModel.findById(_id)
-        .populate('positions')
+        .populate({
+            path: 'positions',
+            match: { isOpen: true },
+        })
         .then((result) => { userPositions = result }
         )
         .catch(next)
@@ -69,37 +72,59 @@ function getAllPositions(req, res, next) {
     res.set('Content-Type', 'text/event-stream');
     res.set('Cache-Control', 'no - cache');
     res.set('Connection', 'keep-alive');
-    
+
     let interval = setInterval(function () {
         let date = new Date(); //to capture the timestamp of the request
         console.log('executing request');
         res.write('event:' + 'timestamp\n');
         res.write('data:' + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + '\n\n');
         res.write('data:' + JSON.stringify(userPositions.positions) + '\n\n');
-      
-    }, 2000);
+
+    }, 1000);
     req.on('close', () => {
         console.log('connection closed');
         clearInterval(interval);
-        res.end(); 
+        res.end();
     });
 };
-
-
-
+function getDetailsForPosition(req, res, next) {
+    const { _id: userId } = req.user;
+    const coinSymbol = req.params.id.toLowerCase();
+    let coinDetail;
+    userModel.findById(userId)
+        .populate({
+            path: 'positions',
+            match: { symbol: coinSymbol },
+        })
+        .then((result) => {
+            coinDetail = result.positions[0];
+            res.status(200).json(coinDetail);
+        }
+        )
+        .catch(next)
+}
 function getHistory(req, res, next) {
     const { _id: userId } = req.user;
-    userModel.findById(userId)
-        .populate(
-            {
-                path: 'positions',
-                match: { isOpen: false },
+    let offset = Number(req.query.offset) || 0;
+    let size = Number(req.query.limit) || Users.length;
+    let total;
+    Promise.all([
+        userModel.findById(userId).populate({ path: 'positions', match: { isOpen: false } }),
+        userModel.findById(userId).populate({ path: 'positions', match: { isOpen: false }, skip: offset, limit: size })
+    ])
+        .then(result => { 
+            res.json({
+                total: result[0].positions.length,
+                positions: result[1].positions
             })
-        .then(result => res.status(200).json(result))
+         })
         .catch(next);
 }
+
+
 module.exports = {
     createPosition,
     getAllPositions,
-    getHistory
+    getHistory,
+    getDetailsForPosition
 }
