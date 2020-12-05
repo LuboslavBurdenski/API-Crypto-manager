@@ -12,11 +12,13 @@ const removePassword = (data) => {
     return userData
 }
 
-function register(req, res, next) {
-    const { username, email, password, repeatPassword } = req.body;
 
-    console.log(username, email, password);
-    return userModel.create({ username, email, password })
+
+function register(req, res, next) {
+    const { username, email, password, repeatPassword, balance } = req.body;
+
+    console.log(username, email, password, balance);
+    return userModel.create({ username, email, password, balance })
         .then((createdUser) => {
             createdUser = bsonToJson(createdUser);
             createdUser = removePassword(createdUser);
@@ -68,6 +70,7 @@ function login(req, res, next) {
                 console.log(authCookieName);
 
             }
+            
             res.status(200)
                 .send(user);
         })
@@ -76,12 +79,14 @@ function login(req, res, next) {
 
 function logout(req, res) {
     const token = req.cookies[authCookieName];
+    console.log(token);
 
     tokenBlacklistModel.create({ token })
         .then(() => {
+           
             res.clearCookie(authCookieName)
-                .status(401)
-                .send({ message: 'Logged out!' });
+                .status(200)
+                .json({ message: 'Logged out!' });
         })
         .catch(err => res.send(err));
 }
@@ -91,12 +96,13 @@ function getProfileInfo(req, res, next) {
     const { _id: userId } = req.user;
     userModel.findById(userId)
         .then((user) => {
+
             let userData = {
                 userId: user._id,
                 email: user.email,
                 username: user.username,
             };
-            res.status(200).json(user);
+            res.status(200).json(userData);
         })
         .catch(e => console.log(e));
 
@@ -109,7 +115,6 @@ function getProfileInfo(req, res, next) {
 function editProfileInfo(req, res, next) {
     const { _id: userId } = req.user;
     const { tel, username, email } = req.body;
-
     userModel.findOneAndUpdate({ _id: userId }, { tel, username, email }, { runValidators: true, new: true })
         .then(x => { res.status(200).json(x) })
         .catch(next);
@@ -121,4 +126,5 @@ module.exports = {
     logout,
     getProfileInfo,
     editProfileInfo,
+
 }

@@ -12,7 +12,7 @@ let data = '';
         });
         resp.on('end', () => {
             console.log('first end');
-           
+
         });
     }).on("error", (err) => {
         console.log("Error: " + err.message);
@@ -41,7 +41,7 @@ let coinsForCustomers;
 //making call to CoinGecko API each 15 seconds to take the coins needed in desc order
 (function nodeCronAllCoinsForCustomers() {
     cron.schedule('*/5 * * * * *', (req, res, next) => {
-      //  console.log("running task every 1.5 seconds");
+        //  console.log("running task every 1.5 seconds");
         let uniqueIdsOfCoins = [];
         positionModel.find({ isOpen: true })
             .then(((trades) => {
@@ -92,21 +92,23 @@ let updatedData;
                         let isOpen = true;
                         if (coin.id === trade.coinId) {
                             currentPrice = coin.current_price;
-                            if(trade.stop){
-                                if(currentPrice <= trade.stop){ isOpen = false}
+                            if (trade.stop) {
+                                if (currentPrice <= trade.stop) { isOpen = false }
                             }
-                            if(trade.stop){
-                                if(currentPrice >= trade.target){ isOpen = false}
+                            if (trade.stop) {
+                                if (currentPrice >= trade.target) { isOpen = false }
                             }
                             changeIn24h = coin.price_change_percentage_24h_in_currency;
                             prtLoss = currentPrice - trade.entry;
                             prtLossPerCent = (prtLoss / trade.entry) * 100;
+                            
                             positionModel.findByIdAndUpdate({ _id: trade._id }, {
                                 currentPrice: currentPrice,
                                 changeIn24h: changeIn24h,
                                 prfLoss: prtLoss,
                                 prfLossPerCent: prtLossPerCent,
-                                isOpen: isOpen
+                                isOpen: isOpen,
+                                
                             })
                                 .then((updatedTrade) => { midUpdatedData.push(updatedTrade); })
                                 .catch(next)
@@ -121,10 +123,10 @@ let updatedData;
 })();
 
 
-function dataGet(){
+function dataGet() {
     return data;
 };
-function updatedDataGet(){
+function updatedDataGet() {
     return updatedData;
 }
 

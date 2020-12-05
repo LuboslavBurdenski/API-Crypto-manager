@@ -57,21 +57,34 @@ function createPosition(req, res, next) {
 }
 
 function getAllPositions(req, res, next) {
-    // 'Content-Type': 'text/event-stream',
-    // 'Cache-Control': 'no-cache',
-    // 'Connection': 'keep-alive'
+    const { _id } = req.user;
+    let userPositions;
+
+    userModel.findById(_id)
+        .populate('positions')
+        .then((result) => { userPositions = result }
+        )
+        .catch(next)
+
     res.set('Content-Type', 'text/event-stream');
     res.set('Cache-Control', 'no - cache');
     res.set('Connection', 'keep-alive');
-    setInterval(function () {
+    
+    let interval = setInterval(function () {
         let date = new Date(); //to capture the timestamp of the request
         console.log('executing request');
         res.write('event:' + 'timestamp\n');
         res.write('data:' + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + '\n\n');
-        res.write('data:' + JSON.stringify(updatedCoins.getUpdatedData()) + '\n\n');
+        res.write('data:' + JSON.stringify(userPositions.positions) + '\n\n');
+      
     }, 2000);
+    req.on('close', () => {
+        console.log('connection closed');
+        clearInterval(interval);
+        res.end(); 
+    });
 };
-//res.status(200).json(updatedCoins.getUpdatedData());
+
 
 
 function getHistory(req, res, next) {
