@@ -99,16 +99,16 @@ let updatedData;
                                 if (currentPrice >= trade.target) { isOpen = false }
                             }
                             changeIn24h = coin.price_change_percentage_24h_in_currency;
-                            prtLoss = currentPrice - trade.entry;
-                            prtLossPerCent = (prtLoss / trade.entry) * 100;
-                            
+                            prtLoss = (currentPrice - trade.entry) * trade.shares;
+                            prtLossPerCent = ((currentPrice - trade.entry) / trade.entry) * 100;
+
                             positionModel.findByIdAndUpdate({ _id: trade._id }, {
                                 currentPrice: currentPrice,
                                 changeIn24h: changeIn24h,
                                 prfLoss: prtLoss,
                                 prfLossPerCent: prtLossPerCent,
                                 isOpen: isOpen,
-                                
+
                             })
                                 .then((updatedTrade) => { midUpdatedData.push(updatedTrade); })
                                 .catch(next)

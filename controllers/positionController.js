@@ -22,7 +22,10 @@ function createPosition(req, res, next) {
     let allSum;
     let avgEntry;
     userModel.findById(userId)
-        .populate('positions')
+        .populate({
+            path: 'positions',
+            match: { isOpen: true },
+        })
         .then(r => {
             let isExists = r.positions.filter((trade) => trade.symbol === symbol)[0];
             if (!!isExists) {
@@ -87,6 +90,7 @@ function getAllPositions(req, res, next) {
         res.end();
     });
 };
+
 function getDetailsForPosition(req, res, next) {
     const { _id: userId } = req.user;
     const coinSymbol = req.params.id.toLowerCase();
@@ -103,6 +107,19 @@ function getDetailsForPosition(req, res, next) {
         )
         .catch(next)
 }
+
+function editPosition(req, res, next) {
+    // const { _id: userId } = req.user;
+    // const {}
+    // const coinSymbol = req.params.id.toLowerCase();
+    // positionModel.findByIdAndUpdate({ _id: positionId }, {
+    //     entry: currentPrice,
+    //     stop: changeIn24h,
+    //     notes: notes
+    // })
+    //     .then((updatedTrade) => { midUpdatedData.push(updatedTrade); })
+    //     .catch(next)
+}
 function getHistory(req, res, next) {
     const { _id: userId } = req.user;
     let offset = Number(req.query.offset) || 0;
@@ -112,12 +129,12 @@ function getHistory(req, res, next) {
         userModel.findById(userId).populate({ path: 'positions', match: { isOpen: false } }),
         userModel.findById(userId).populate({ path: 'positions', match: { isOpen: false }, skip: offset, limit: size })
     ])
-        .then(result => { 
+        .then(result => {
             res.json({
                 total: result[0].positions.length,
                 positions: result[1].positions
             })
-         })
+        })
         .catch(next);
 }
 
@@ -126,5 +143,6 @@ module.exports = {
     createPosition,
     getAllPositions,
     getHistory,
-    getDetailsForPosition
+    getDetailsForPosition,
+    editPosition
 }
