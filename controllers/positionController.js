@@ -138,7 +138,7 @@ function closePosition(req, res, next) {
     const { _id: userId } = req.user;
     const coinSymbol = req.params.id.toLowerCase();
 
-    let { sum, balance, prfLoss } = req.body;
+    let { sum } = req.body;
 
     userModel.findById(userId)
         .populate({
@@ -148,15 +148,15 @@ function closePosition(req, res, next) {
                 symbol: coinSymbol
             },
         })
-        .then(({ positions }) => {
+        .then(({ positions, balance }) => {
             let posId = positions[0]._id;
+
             positionModel.findById(posId)
                 .then(result => {
+                    console.log(result);
                     if (result.sum === sum) {
-
                         let newBalance = Number(balance) + Number(result.prfLoss) + Number(sum);
-                        
-                        console.log(newBalance);
+
                         positionModel.findOneAndUpdate({ _id: posId }, { isOpen: false })
                             .then((result) => {
                                 console.log(result);
@@ -170,26 +170,27 @@ function closePosition(req, res, next) {
                             .catch(next);
 
                     } else {
-                        result.isOpen = false;
-                        result.sum = sum;
                         let newSum = result.sum - sum;
-                        let newBalance = Number(balance) + ((sum / result.sum) * prfLoss);
-                        // console.log(result.sum);
-                        // console.log(sum);
-                        // console.log(newSum);
-                        // console.log(newBalance);
-                        // positionModel.create(result)
-                        //     .then(newPositionForHistory => {
-                        //         userModel.updateOne({ _id: userId }, { $push: { positions: newPositionForHistory._id }, balance: newBalance })
-                        //             .then((result) => {
-                        //                 console.log(result);
-                        //                 res.status(200).json({ message: 'Successfully partially closed position!' });
-                        //             })
-                        //             .catch(next);
-                        //     })
-                        //     .catch(next)
+                        let newBalance = Number(balance) + ((sum / result.sum) * result.prfLoss);
+                        console.log(newBalance);
+                        positionModel.create({
+                            isOpen: false, symbol: result.symbol, coinId: result.coinId, entry: result.entry, sum: sum, shares: result.shares,
+                            target: result.target, stop: result.stop, currentPrice: result.currentPrice,
+                            prfLoss: result.prfLoss, prfLossPerCent: result.prfLossPerCent,
+                            creator: userId
+                        })
+                            .then(newPositionForHistory => {
+                                console.log(newPositionForHistory);
+                                userModel.updateOne({ _id: userId }, { $push: { positions: newPositionForHistory._id }, balance: newBalance })
+                                    .then((result) => {
+                                        console.log(result);
+                                        res.status(200).json({ message: 'Successfully partially closed position!' });
+                                    })
+                                    .catch(next);
+                            })
+                            .catch(next)
 
-                        // positionModel.findByIdAndUpdate({ _id: posId }, { sum: newSum });
+                        positionModel.findByIdAndUpdate({ _id: posId }, { sum: newSum });
                     }
 
                 })
