@@ -26,11 +26,13 @@ function getStatsByMonth(req, res, next) {
             console.log(result);
             res.status(200).json(result);
         })
+        .catch(next)
 }
 
 function getStatsBySegment(req, res, next) {
     const { _id: userId } = req.user;
     let segment = {};
+    let dataArray = [];
     Promise.all([
         positionModel.aggregate([[
             {
@@ -44,27 +46,47 @@ function getStatsBySegment(req, res, next) {
             }
         ]]),
         userModel.findById(userId)
-            .populate('positions')])
+            .populate({
+                path: 'positions',
+                match: {
+                    isOpen: true,
+                },
+            })])
 
         .then(([sumAll, allPos]) => {
-            
             allPos.positions.forEach(p => {
-                console.log(p);
                 let key = p.symbol;
-                
                 if (segment[key]) {
                     segment[key] += (Number(p.sum) / Number(sumAll[0].sum)) * 100;
                 } else {
                     segment[key] = (Number(p.sum) / Number(sumAll[0].sum)) * 100;
                 }
             });
-            console.log(segment);
-            res.status(200).json(segment);
+            for (let key in segment) {
+                let newObj = {};
+                newObj[key] = segment[key];
+                dataArray.push(newObj);
+            }
+            console.log(dataArray);
+            res.status(200).json(dataArray);
         })
         .catch(next)
+}
+function getAverages(req, res, next) {
+    const { _id: userId } = req.user;
+    positionModel.aggregate([
+        { $match: { 'creator': userId, isOpen: false }},{
+            "$group": {
+                "_id": 'max',
+                "max": { "$max": "$prfLoss" },
+                "min": { "$min": "$prfLoss" },
+            }
+        }
+    ]).then(result => console.log(result))
 }
 
 module.exports = {
     getStatsByMonth,
-    getStatsBySegment
+    getStatsBySegment,
+    getAverages
 }

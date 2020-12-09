@@ -9,6 +9,7 @@ router.get('/details/:id', auth(), positionController.getDetailsForPosition);
 router.get('/history', auth(), positionController.getHistory);
 router.post('/create', auth(), positionController.createPosition);
 router.put('/edit/:id', auth(), positionController.editPosition);
+router.put('/close/:id', auth(), positionController.closePosition);
 
 
 module.exports = router;

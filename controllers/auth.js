@@ -70,7 +70,7 @@ function login(req, res, next) {
                 console.log(authCookieName);
 
             }
-            
+
             res.status(200)
                 .send(user);
         })
@@ -83,7 +83,7 @@ function logout(req, res) {
 
     tokenBlacklistModel.create({ token })
         .then(() => {
-           
+
             res.clearCookie(authCookieName)
                 .status(200)
                 .json({ message: 'Logged out!' });
@@ -94,22 +94,19 @@ function logout(req, res) {
 function getProfileInfo(req, res, next) {
     console.log('profile');
     const { _id: userId } = req.user;
+
     userModel.findById(userId)
         .then((user) => {
-
+            req.user = user;
             let userData = {
                 userId: user._id,
                 email: user.email,
                 username: user.username,
+                balance: user.balance
             };
             res.status(200).json(userData);
         })
         .catch(e => console.log(e));
-
-    // userModel.findOne({ _id: userId }, { password: 0, __v: 0 }) //finding by Id and returning without password and __v
-    //     .populate('positions')
-    //     .then(user => { res.status(200).json(user.positions) })
-    //     .catch(next);
 }
 
 function editProfileInfo(req, res, next) {
@@ -119,12 +116,14 @@ function editProfileInfo(req, res, next) {
         .then(x => { res.status(200).json(x) })
         .catch(next);
 }
-
+function getUserProfile() {
+    return userProfile;
+}
 module.exports = {
     login,
     register,
     logout,
     getProfileInfo,
     editProfileInfo,
-
+    
 }

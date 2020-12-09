@@ -108,7 +108,6 @@ let updatedData;
                                 prfLoss: prtLoss,
                                 prfLossPerCent: prtLossPerCent,
                                 isOpen: isOpen,
-
                             })
                                 .then((updatedTrade) => { midUpdatedData.push(updatedTrade); })
                                 .catch(next)

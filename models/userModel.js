@@ -23,7 +23,7 @@ const userSchema = new mongoose.Schema({
         },
     },
     balance: {
-        type: String,
+        type: Number,
         required: true,
     },
     password: {
