@@ -75,32 +75,45 @@ function getAllPositions(req, res, next) {
     const { _id } = req.user;
     let userPositions;
 
+    res.set('Content-Type', 'text/event-stream');
+    res.set('Cache-Control', 'no - cache');
+    res.set('Connection', 'keep-alive');
+
     userModel.findById(_id)
         .populate({
             path: 'positions',
             match: { isOpen: true },
         })
-        .then((result) => { userPositions = result }
+        .then((result) => {
+            userPositions = result
+            setTimeout(function () {
+                console.log('firstOne');
+                let date = new Date(); //to capture the timestamp of the request
+                console.log('executing request');
+                res.write('event:' + 'timestamp\n');
+                res.write('data:' + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + '\n\n');
+                res.write('data:' + JSON.stringify(userPositions.positions) + '\n\n');
+            }, 0);
+
+
+            let interval = setInterval(function () {
+                let date = new Date(); //to capture the timestamp of the request
+                console.log('executing request');
+                res.write('event:' + 'timestamp\n');
+                res.write('data:' + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + '\n\n');
+                res.write('data:' + JSON.stringify(userPositions.positions) + '\n\n');
+        
+            }, 5000);
+            req.on('close', () => {
+                console.log('connection closed');
+                clearInterval(interval);
+                res.end();
+            });
+        }
         )
         .catch(next)
-        
-    res.set('Content-Type', 'text/event-stream');
-    res.set('Cache-Control', 'no - cache');
-    res.set('Connection', 'keep-alive');
 
-    let interval = setInterval(function () {
-        let date = new Date(); //to capture the timestamp of the request
-        console.log('executing request');
-        res.write('event:' + 'timestamp\n');
-        res.write('data:' + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + '\n\n');
-        res.write('data:' + JSON.stringify(userPositions.positions) + '\n\n');
-
-    }, 1000);
-    req.on('close', () => {
-        console.log('connection closed');
-        clearInterval(interval);
-        res.end();
-    });
+   
 };
 
 
@@ -218,9 +231,9 @@ function getHistory(req, res, next) {
         userModel.findById(userId).populate({ path: 'positions', match: { isOpen: false }, skip: offset, limit: size })
     ])
         .then(result => {
-           console.log(offset, size);
-           let totalOfAllPositions = result[0].positions.length;
-           positions = result[1].positions;
+            console.log(offset, size);
+            let totalOfAllPositions = result[0].positions.length;
+            positions = result[1].positions;
             res.json({
                 total: totalOfAllPositions,
                 positions: positions
