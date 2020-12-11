@@ -6,6 +6,7 @@ const apiRouter = require('./router');
 const cors = require('cors');
 // const config = require('./config/config');
 const { errorHandler } = require('./utils');
+let userModel = require('./models/userModel');
 
 dbConnector()
   .then(() => {
@@ -20,6 +21,8 @@ dbConnector()
     }));
 
     app.use('/api', apiRouter);
+
+   
 
     app.use(errorHandler);
 

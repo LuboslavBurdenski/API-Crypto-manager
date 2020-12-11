@@ -2,7 +2,7 @@ let positionModel = require('../models/postModel');
 let userModel = require('../models/userModel');
 let coinData = require('../nodeCron/nodeCron');
 let updatedCoins = require('../controllers/coinsController');
-
+const { addBalance } = require('../utils/addBalance');
 
 function createPosition(req, res, next) {
     const { _id: userId } = req.user;
@@ -30,16 +30,22 @@ function createPosition(req, res, next) {
         .then(r => {
             let isExists = r.positions.filter((trade) => trade.symbol === symbol)[0];
             if (!!isExists) {
-
+                let user = req.user;
                 allSum = isExists.sum + sum;
                 allShares = isExists.shares + shares;
                 avgEntry = allSum / allShares;
-
+                let balance = Number(user.balance) - sum;
                 console.log('pos update in');
                 positionModel
                     .findOneAndUpdate({ _id: isExists._id }, { entry: avgEntry, sum: allSum, shares: allShares })
                     .then(result => {
                         res.status(200).json({ message: 'Successfully added to the older position!' })
+                    })
+                    .catch(next);
+                userModel.updateOne({ _id: userId }, { balance: balance })
+                    .then((result) => {
+                        console.log(result);
+                        res.status(200).json({ message: 'Successfully opened position!' });
                     })
                     .catch(next);
             } else {
@@ -77,7 +83,7 @@ function getAllPositions(req, res, next) {
         .then((result) => { userPositions = result }
         )
         .catch(next)
-
+        
     res.set('Content-Type', 'text/event-stream');
     res.set('Cache-Control', 'no - cache');
     res.set('Connection', 'keep-alive');
@@ -96,6 +102,7 @@ function getAllPositions(req, res, next) {
         res.end();
     });
 };
+
 
 function getDetailsForPosition(req, res, next) {
     const { _id: userId } = req.user;
@@ -137,9 +144,7 @@ function editPosition(req, res, next) {
 function closePosition(req, res, next) {
     const { _id: userId } = req.user;
     const coinSymbol = req.params.id.toLowerCase();
-
     let { sum } = req.body;
-
     userModel.findById(userId)
         .populate({
             path: 'positions',
@@ -171,28 +176,32 @@ function closePosition(req, res, next) {
 
                     } else {
                         let newSum = result.sum - sum;
-                        let newBalance = Number(balance) + ((sum / result.sum) * result.prfLoss);
-                        console.log(newBalance);
+                        let closingPart = (sum / result.sum);
+                        let newBalance = Number(balance) + (closingPart * result.prfLoss);
+                        let newShares = closingPart * result.shares;
+                        let newPrfLoss = closingPart * result.prfLoss;
+                        let newPrfLossPercent = result.prfLossPerCent;
+
+
+                        let newSharesForTheMainPos = result.shares - newShares;
                         positionModel.create({
-                            isOpen: false, symbol: result.symbol, coinId: result.coinId, entry: result.entry, sum: sum, shares: result.shares,
+                            isOpen: false, symbol: result.symbol, coinId: result.coinId, entry: result.entry, sum: sum, shares: newShares,
                             target: result.target, stop: result.stop, currentPrice: result.currentPrice,
-                            prfLoss: result.prfLoss, prfLossPerCent: result.prfLossPerCent,
-                            creator: userId
+                            prfLoss: newPrfLoss, prfLossPerCent: newPrfLossPercent, creator: userId
                         })
                             .then(newPositionForHistory => {
                                 console.log(newPositionForHistory);
                                 userModel.updateOne({ _id: userId }, { $push: { positions: newPositionForHistory._id }, balance: newBalance })
                                     .then((result) => {
                                         console.log(result);
-                                        res.status(200).json({ message: 'Successfully partially closed position!' });
                                     })
                                     .catch(next);
                             })
                             .catch(next)
-
-                        positionModel.findByIdAndUpdate({ _id: posId }, { sum: newSum });
+                        positionModel.findByIdAndUpdate({ _id: posId }, { sum: newSum, shares: newSharesForTheMainPos })
+                            .then(() => res.status(200).json({ message: 'Successfully partially closed position!' }))
+                            .catch(next)
                     }
-
                 })
                 .catch(next)
         })
@@ -201,17 +210,20 @@ function closePosition(req, res, next) {
 }
 function getHistory(req, res, next) {
     const { _id: userId } = req.user;
-    let offset = Number(req.query.offset) || 0;
-    let size = Number(req.query.limit) || Users.length;
-    let total;
+    let positions = [];
+    let size = Number(req.query.limit) || positions.length;
+    let offset = Number(req.query.offset) * size || 0;
     Promise.all([
         userModel.findById(userId).populate({ path: 'positions', match: { isOpen: false } }),
         userModel.findById(userId).populate({ path: 'positions', match: { isOpen: false }, skip: offset, limit: size })
     ])
         .then(result => {
+           console.log(offset, size);
+           let totalOfAllPositions = result[0].positions.length;
+           positions = result[1].positions;
             res.json({
-                total: result[0].positions.length,
-                positions: result[1].positions
+                total: totalOfAllPositions,
+                positions: positions
             })
         })
         .catch(next);

@@ -17,7 +17,7 @@ function getStatsByMonth(req, res, next) {
         {
             "$group": {
                 "_id": "$DueDateMonth",
-                "avgValue": { "$avg": "$prfLoss" },
+                "sumValue": { "$sum": "$prfLoss" },
                 "monthValue": { "$first": "$DueDateMonth" }
             }
         }
@@ -74,15 +74,42 @@ function getStatsBySegment(req, res, next) {
 }
 function getAverages(req, res, next) {
     const { _id: userId } = req.user;
-    positionModel.aggregate([
-        { $match: { 'creator': userId, isOpen: false }},{
-            "$group": {
-                "_id": 'max',
-                "max": { "$max": "$prfLoss" },
-                "min": { "$min": "$prfLoss" },
+    let winRate;
+    let wins = 0;
+    let losses = 0;
+    Promise.all([
+        positionModel.aggregate([
+            { $match: { 'creator': userId } }, {
+                "$group": {
+                    "_id": 'max/min',
+                    "max": { "$max": "$prfLoss" },
+                    "min": { "$min": "$prfLoss" },
+                }
             }
-        }
-    ]).then(result => console.log(result))
+        ]),
+        positionModel.find({ creator: userId }),
+
+
+    ]).then(result => {
+        let maxMin = result[0];
+        console.log(result[1]);
+
+        result[1].forEach(p => {
+            if (p.prfLoss > 0) {
+                wins++;
+            } else if (p.prfLoss < 0) {
+                losses++;
+            }
+        });
+        winRate = (wins / result[1].length) * 100;
+        console.log(  maxMin[0]);
+      
+        maxMin[0]['winRate'] = winRate;
+
+        res.status(200).json(maxMin[0]);
+    })
+        .catch(next);
+
 }
 
 module.exports = {
