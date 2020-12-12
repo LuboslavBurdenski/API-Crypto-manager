@@ -23,7 +23,6 @@ function getStatsByMonth(req, res, next) {
         }
     ])
         .then((result) => {
-            console.log(result);
             res.status(200).json(result);
         })
         .catch(next)
@@ -36,7 +35,7 @@ function getStatsBySegment(req, res, next) {
     Promise.all([
         positionModel.aggregate([[
             {
-                $match: { 'creator': userId }
+                $match: { 'creator': userId, isOpen: true }
             },
             {
                 "$group": {
@@ -56,18 +55,16 @@ function getStatsBySegment(req, res, next) {
         .then(([sumAll, allPos]) => {
             allPos.positions.forEach(p => {
                 let key = p.symbol;
-                if (segment[key]) {
-                    segment[key] += (Number(p.sum) / Number(sumAll[0].sum)) * 100;
-                } else {
-                    segment[key] = (Number(p.sum) / Number(sumAll[0].sum)) * 100;
-                }
+                segment[key] = (Number(p.sum) / Number(sumAll[0].sum)) * 100;
             });
+
             for (let key in segment) {
                 let newObj = {};
                 newObj[key] = segment[key];
                 dataArray.push(newObj);
             }
             console.log(dataArray);
+
             res.status(200).json(dataArray);
         })
         .catch(next)
@@ -92,19 +89,18 @@ function getAverages(req, res, next) {
 
     ]).then(result => {
         let maxMin = result[0];
-        console.log(result[1]);
 
-        result[1].forEach(p => {
-            if (p.prfLoss > 0) {
-                wins++;
-            } else if (p.prfLoss < 0) {
-                losses++;
-            }
-        });
-        winRate = (wins / result[1].length) * 100;
-        console.log(  maxMin[0]);
-      
-        maxMin[0]['winRate'] = winRate;
+        if (result[1].length) {
+            result[1].forEach(p => {
+                if (p.prfLoss > 0) {
+                    wins++;
+                } else if (p.prfLoss < 0) {
+                    losses++;
+                }
+            });
+            winRate = (wins / result[1].length) * 100;
+            maxMin[0]['winRate'] = winRate;
+        }
 
         res.status(200).json(maxMin[0]);
     })

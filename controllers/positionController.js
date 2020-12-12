@@ -2,7 +2,7 @@ let positionModel = require('../models/postModel');
 let userModel = require('../models/userModel');
 let coinData = require('../nodeCron/nodeCron');
 let updatedCoins = require('../controllers/coinsController');
-const { addBalance } = require('../utils/addBalance');
+
 
 function createPosition(req, res, next) {
     const { _id: userId } = req.user;
@@ -39,7 +39,7 @@ function createPosition(req, res, next) {
                 positionModel
                     .findOneAndUpdate({ _id: isExists._id }, { entry: avgEntry, sum: allSum, shares: allShares })
                     .then(result => {
-                        res.status(200).json({ message: 'Successfully added to the older position!' })
+                        res.status(200).json({ message: 'Successfully added sum to the already opened position!' })
                     })
                     .catch(next);
                 userModel.updateOne({ _id: userId }, { balance: balance })
@@ -74,7 +74,6 @@ function createPosition(req, res, next) {
 function getAllPositions(req, res, next) {
     const { _id } = req.user;
     let userPositions;
-
     res.set('Content-Type', 'text/event-stream');
     res.set('Cache-Control', 'no - cache');
     res.set('Connection', 'keep-alive');
@@ -89,7 +88,7 @@ function getAllPositions(req, res, next) {
             setTimeout(function () {
                 console.log('firstOne');
                 let date = new Date(); //to capture the timestamp of the request
-                console.log('executing request');
+                console.log('executing request1');
                 res.write('event:' + 'timestamp\n');
                 res.write('data:' + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + '\n\n');
                 res.write('data:' + JSON.stringify(userPositions.positions) + '\n\n');
@@ -102,8 +101,8 @@ function getAllPositions(req, res, next) {
                 res.write('event:' + 'timestamp\n');
                 res.write('data:' + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + '\n\n');
                 res.write('data:' + JSON.stringify(userPositions.positions) + '\n\n');
-        
             }, 5000);
+
             req.on('close', () => {
                 console.log('connection closed');
                 clearInterval(interval);
@@ -113,7 +112,7 @@ function getAllPositions(req, res, next) {
         )
         .catch(next)
 
-   
+
 };
 
 
@@ -149,7 +148,7 @@ function editPosition(req, res, next) {
         .then(({ positions }) => {
             let posId = positions[0]._id;
             positionModel.findByIdAndUpdate({ _id: posId }, { target: target, stop: stop })
-                .then(result => res.status(200).json(result))
+                .then(() => res.status(200).json({message:'Successfully edited position!'}))
         })
         .catch(next)
 
@@ -189,12 +188,14 @@ function closePosition(req, res, next) {
 
                     } else {
                         let newSum = result.sum - sum;
+
                         let closingPart = (sum / result.sum);
-                        let newBalance = Number(balance) + (closingPart * result.prfLoss);
+
+                        let newBalance = Number(balance) + (closingPart * result.prfLoss) + Number(sum);
+
                         let newShares = closingPart * result.shares;
                         let newPrfLoss = closingPart * result.prfLoss;
                         let newPrfLossPercent = result.prfLossPerCent;
-
 
                         let newSharesForTheMainPos = result.shares - newShares;
                         positionModel.create({
@@ -219,7 +220,6 @@ function closePosition(req, res, next) {
                 .catch(next)
         })
         .catch(next)
-
 }
 function getHistory(req, res, next) {
     const { _id: userId } = req.user;

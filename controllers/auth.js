@@ -29,7 +29,7 @@ function register(req, res, next) {
             } else {
                 res.cookie(authCookieName, token, { httpOnly: true })
             }
-            res.status(200).send(createdUser);
+            res.status(200).send({ message: 'Successfully registered account in USD.\nNow you are logged in!', user: createdUser });
         })
         .catch(err => {
             if (err.name === 'MongoError' && err.code === 11000) {
@@ -72,7 +72,7 @@ function login(req, res, next) {
             }
 
             res.status(200)
-                .send(user);
+                .send({ message: 'Successfully logged in!', user: user });
         })
         .catch(next);
 }
@@ -86,7 +86,7 @@ function logout(req, res) {
 
             res.clearCookie(authCookieName)
                 .status(200)
-                .json({ message: 'Logged out!' });
+                .json({ message: 'Successfully logged out!' });
         })
         .catch(err => res.send(err));
 }
@@ -125,5 +125,5 @@ module.exports = {
     logout,
     getProfileInfo,
     editProfileInfo,
-    
+
 }
