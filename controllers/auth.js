@@ -5,6 +5,7 @@ const {
 
 const utils = require('../utils');
 const { authCookieName } = require('../app-config');
+const { addBalance } = require('../utils/addBalance');
 
 const bsonToJson = (data) => { return JSON.parse(JSON.stringify(data)) };
 const removePassword = (data) => {
@@ -25,8 +26,10 @@ function register(req, res, next) {
 
             const token = utils.jwt.createToken({ id: createdUser._id });
             if (process.env.NODE_ENV === 'production') {
+                addBalance();
                 res.cookie(authCookieName, token, { httpOnly: true, sameSite: 'none', secure: true })
             } else {
+                addBalance();
                 res.cookie(authCookieName, token, { httpOnly: true })
             }
             res.status(200).send({ message: 'Successfully registered account in USD.\nNow you are logged in!', user: createdUser });
@@ -57,18 +60,19 @@ function login(req, res, next) {
                     .send({ message: 'Wrong username or password' });
                 return
             }
+            
             user = bsonToJson(user);
             user = removePassword(user);
-
             const token = utils.jwt.createToken({ id: user._id });
 
+            res.set('User-Balance', user.balance);
+            res.set('Access-Control-Expose-Headers', 'User-Balance');
             if (process.env.NODE_ENV === 'production') {
                 res.cookie(authCookieName, token, { httpOnly: true, sameSite: 'none', secure: true })
             } else {
                 res.cookie(authCookieName, token, { httpOnly: true })
                 console.log(token);
                 console.log(authCookieName);
-
             }
 
             res.status(200)
