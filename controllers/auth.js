@@ -24,12 +24,14 @@ function register(req, res, next) {
             createdUser = bsonToJson(createdUser);
             createdUser = removePassword(createdUser);
 
+            res.set('User-Balance', createdUser.balance);
+            res.set('Access-Control-Expose-Headers', 'User-Balance');
             const token = utils.jwt.createToken({ id: createdUser._id });
             if (process.env.NODE_ENV === 'production') {
-                addBalance();
+                
                 res.cookie(authCookieName, token, { httpOnly: true, sameSite: 'none', secure: true })
             } else {
-                addBalance();
+                
                 res.cookie(authCookieName, token, { httpOnly: true })
             }
             res.status(200).send({ message: 'Successfully registered account in USD.\nNow you are logged in!', user: createdUser });
