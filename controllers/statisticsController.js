@@ -1,7 +1,6 @@
 let positionModel = require('../models/postModel');
 let userModel = require('../models/userModel');
 
-
 function getStatsByMonth(req, res, next) {
     const { _id: userId } = req.user;
     positionModel.aggregate([
@@ -105,7 +104,6 @@ function getAverages(req, res, next) {
         res.status(200).json(maxMin[0]);
     })
         .catch(next);
-
 }
 
 module.exports = {
