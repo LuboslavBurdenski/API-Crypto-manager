@@ -6,8 +6,7 @@ function addBalance(req, res, next) {
         let balance;
         userModel.findById(userId)
             .then(user => {
-                balance = user.balance
-                console.log(balance);
+                balance = user.balance;
                 res.set('User-Balance', balance);
                 res.set('Access-Control-Expose-Headers', 'User-Balance');
             }).catch(next);
