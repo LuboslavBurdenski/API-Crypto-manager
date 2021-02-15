@@ -5,7 +5,7 @@ const utils = require('../utils')
 const data = {
     "name": "rest-api",
     "version": "1.0.0",
-    "description": "API for Crypto manager",
+    "description": "API developed for Crypto manager",
     "main": "index.js",
 }
 
