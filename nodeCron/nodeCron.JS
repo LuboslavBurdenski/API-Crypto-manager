@@ -78,7 +78,7 @@ let coinsForCustomers;
 
 let updatedData;
 (function nodeCronUpdateAllOpenPositions() {
-    cron.schedule('*/1.7 * * * * *', (req, res, next) => {
+    cron.schedule('*/2 * * * * *', (req, res, next) => {
         //console.log("running task every 2 seconds");
         let midUpdatedData = [];
         positionModel.find({ isOpen: true })
@@ -113,7 +113,6 @@ let updatedData;
                                 .catch(next)
                         }
                     })
-                    //console.log(trade);
                 });
             })
             .catch(next);
@@ -124,7 +123,8 @@ let updatedData;
 
 function dataGet() {
     return data;
-};
+}
+
 function updatedDataGet() {
     return updatedData;
 }

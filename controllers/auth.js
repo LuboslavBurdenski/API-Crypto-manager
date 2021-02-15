@@ -8,11 +8,11 @@ const { authCookieName } = require('../app-config');
 const { addBalance } = require('../utils/addBalance');
 
 const bsonToJson = (data) => { return JSON.parse(JSON.stringify(data)) };
+
 const removePassword = (data) => {
     const { password, __v, ...userData } = data;
     return userData
 }
-
 
 
 function register(req, res, next) {
@@ -122,9 +122,11 @@ function editProfileInfo(req, res, next) {
         .then(x => { res.status(200).json(x) })
         .catch(next);
 }
+
 function getUserProfile() {
     return userProfile;
 }
+
 module.exports = {
     login,
     register,

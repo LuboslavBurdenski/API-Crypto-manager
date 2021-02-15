@@ -1,7 +1,6 @@
 let positionModel = require('../models/postModel');
 let userModel = require('../models/userModel');
 
-
 function getStatsByMonth(req, res, next) {
     const { _id: userId } = req.user;
     positionModel.aggregate([

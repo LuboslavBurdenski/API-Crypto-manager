@@ -115,7 +115,6 @@ function getAllPositions(req, res, next) {
 
 };
 
-
 function getDetailsForPosition(req, res, next) {
     const { _id: userId } = req.user;
     const coinSymbol = req.params.id.toLowerCase();
@@ -153,6 +152,7 @@ function editPosition(req, res, next) {
         .catch(next)
 
 }
+
 function closePosition(req, res, next) {
     const { _id: userId } = req.user;
     const coinSymbol = req.params.id.toLowerCase();
@@ -187,17 +187,15 @@ function closePosition(req, res, next) {
                             .catch(next);
 
                     } else {
+
                         let newSum = result.sum - sum;
-
                         let closingPart = (sum / result.sum);
-
                         let newBalance = Number(balance) + (closingPart * result.prfLoss) + Number(sum);
-
                         let newShares = closingPart * result.shares;
                         let newPrfLoss = closingPart * result.prfLoss;
                         let newPrfLossPercent = result.prfLossPerCent;
-
                         let newSharesForTheMainPos = result.shares - newShares;
+
                         positionModel.create({
                             isOpen: false, symbol: result.symbol, coinId: result.coinId, entry: result.entry, sum: sum, shares: newShares,
                             target: result.target, stop: result.stop, currentPrice: result.currentPrice,
@@ -221,6 +219,7 @@ function closePosition(req, res, next) {
         })
         .catch(next)
 }
+
 function getHistory(req, res, next) {
     const { _id: userId } = req.user;
     let positions = [];
